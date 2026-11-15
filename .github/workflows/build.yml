@@ -35,6 +35,7 @@ jobs:
       - name: Validate build (simulator)
         run: |
           set -o pipefail
+          mkdir -p build
           if ! xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
                  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
                  CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build/xcodebuild-sim.log; then
@@ -47,6 +48,7 @@ jobs:
       - name: Build unsigned IPA (device)
         run: |
           set -o pipefail
+          mkdir -p build
           if ! xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
             -sdk iphoneos -configuration Release -archivePath build/VKTurn.xcarchive \
             CODE_SIGNING_ALLOWED=NO archive 2>&1 | tee build/xcodebuild-dev.log; then
