@@ -1,0 +1,12 @@
+# Сборка
+build/
+*.xcarchive
+Payload/
+
+# Xcode-проект генерируется xcodegen'ом — в репо только project.yml
+*.xcodeproj
+
+# macOS / Xcode мусор
+.DS_Store
+xcuserdata/
+*.swp

@@ -1,0 +1,37 @@
+name: build-ios
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Clone core (vk-turn-proxy)
+        # Публичный репозиторий ядра; если станет приватным — переопредели секретом CORE_REPO_URL
+        run: git clone --depth 1 "${CORE_REPO_URL:-https://github.com/cacggghp/vk-turn-proxy.git}" "$HOME/core"
+
+      - name: Clone hev-socks5-tunnel
+        run: git clone --depth 1 --recurse-submodules https://github.com/hev/hev-socks5-tunnel.git "$HOME/hev"
+
+      - name: Build core for iOS
+        run: CORE_DIR="$HOME/core" scripts/build-core-ios.sh
+
+      - name: Build hev for iOS
+        run: HEV_DIR="$HOME/hev" scripts/build-hev.sh
+
+      - name: Generate Xcode project & build
+        run: IPA=1 scripts/build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vkturn-ios-unsigned
+          path: build/Vkturn-unsigned.ipa
