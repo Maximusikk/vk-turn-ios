@@ -21,10 +21,14 @@ export GOOS=ios GOARCH=arm64 CGO_ENABLED=1
 export CC="$(xcrun -sdk "$SDK" -find clang) -isysroot $(xcrun -sdk "$SDK" --show-sdk-path) -arch arm64"
 
 cd "$CORE_DIR"
-# Лог сборки — пишем в файл: CI складывает его в артефакт build-logs
+# Лог сборки — пишем в файл; при ошибке каждую строку хвоста выводим как
+# GitHub-аннотацию (::error::), чтобы ошибка была видна в API без авторизации.
 if ! go build -buildmode=c-archive -ldflags "-s -w -checklinkname=0" -trimpath -o "$OUT/libvkturn.a" ./client \
      2> "$ROOT/build/core-build.log"; then
   echo "=== ЯДРО НЕ СОБРАЛОСЬ, хвост лога: ==="
+  tail -30 "$ROOT/build/core-build.log" | while IFS= read -r line; do
+    printf '::error::CORE %s\n' "${line:0:300}"
+  done
   tail -60 "$ROOT/build/core-build.log" || true
   exit 1
 fi
