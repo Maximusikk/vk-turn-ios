@@ -32,29 +32,25 @@ jobs:
       - name: Validate build (simulator)
         run: |
           set -o pipefail
-          xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
+          if ! xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
                  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-                 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build/xcodebuild-sim.log
-          rc=$?
-          if [ $rc -ne 0 ]; then
-            { grep -E "error:" build/xcodebuild-sim.log | head -12 || true
+                 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build/xcodebuild-sim.log; then
+            { grep -E "error:" build/xcodebuild-sim.log | head -5 || true
               echo '===TAIL==='
-              tail -18 build/xcodebuild-sim.log; } | while IFS= read -r line; do printf '::error::%s\n' "${line:0:280}"; done
-            exit $rc
+              tail -5 build/xcodebuild-sim.log; } | while IFS= read -r line; do printf '::error::%s\n' "${line:0:280}"; done
+            exit 65
           fi
 
       - name: Build unsigned IPA (device)
         run: |
           set -o pipefail
-          xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
+          if ! xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
             -sdk iphoneos -configuration Release -archivePath build/VKTurn.xcarchive \
-            CODE_SIGNING_ALLOWED=NO archive 2>&1 | tee build/xcodebuild-dev.log
-          rc=$?
-          if [ $rc -ne 0 ]; then
-            { grep -E "error:" build/xcodebuild-dev.log | head -12 || true
+            CODE_SIGNING_ALLOWED=NO archive 2>&1 | tee build/xcodebuild-dev.log; then
+            { grep -E "error:" build/xcodebuild-dev.log | head -5 || true
               echo '===TAIL==='
-              tail -18 build/xcodebuild-dev.log; } | while IFS= read -r line; do printf '::error::%s\n' "${line:0:280}"; done
-            exit $rc
+              tail -5 build/xcodebuild-dev.log; } | while IFS= read -r line; do printf '::error::%s\n' "${line:0:280}"; done
+            exit 65
           fi
           mkdir -p build/Payload
           cp -R build/VKTurn.xcarchive/Products/Applications/VKTurnProxy.app build/Payload/
