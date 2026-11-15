@@ -10,6 +10,6 @@ jobs:
     steps:
       - run: echo "ubuntu ok"
   macos:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - run: echo "macos ok"
