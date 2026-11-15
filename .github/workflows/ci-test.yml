@@ -1,0 +1,15 @@
+name: ci-test
+
+on:
+  push:
+    branches: [ci-test]
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ubuntu ok"
+  macos:
+    runs-on: macos-14
+    steps:
+      - run: echo "macos ok"
