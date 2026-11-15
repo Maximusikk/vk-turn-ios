@@ -38,7 +38,10 @@ jobs:
 
       - name: Simulator errors
         if: failure()
-        run: grep -E "error:" build/xcodebuild-sim.log | head -25 | while IFS= read -r line; do printf '::error::%s\n' "${line:0:300}"; done
+        run: |
+          { grep -E "error:" build/xcodebuild-sim.log | head -15
+            echo '===TAIL==='
+            tail -25 build/xcodebuild-sim.log; } | while IFS= read -r line; do printf '::error::%s\n' "${line:0:280}"; done
 
       - name: Build unsigned IPA (device)
         run: |
