@@ -35,13 +35,13 @@ jobs:
           xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
                  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
                  CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build/xcodebuild-sim.log
-
-      - name: Simulator errors
-        if: failure()
-        run: |
-          { grep -E "error:" build/xcodebuild-sim.log | head -15
-            echo '===TAIL==='
-            tail -25 build/xcodebuild-sim.log; } | while IFS= read -r line; do printf '::error::%s\n' "${line:0:280}"; done
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            { grep -E "error:" build/xcodebuild-sim.log | head -12 || true
+              echo '===TAIL==='
+              tail -18 build/xcodebuild-sim.log; } | while IFS= read -r line; do printf '::error::%s\n' "${line:0:280}"; done
+            exit $rc
+          fi
 
       - name: Build unsigned IPA (device)
         run: |
@@ -49,6 +49,13 @@ jobs:
           xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
             -sdk iphoneos -configuration Release -archivePath build/VKTurn.xcarchive \
             CODE_SIGNING_ALLOWED=NO archive 2>&1 | tee build/xcodebuild-dev.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            { grep -E "error:" build/xcodebuild-dev.log | head -12 || true
+              echo '===TAIL==='
+              tail -18 build/xcodebuild-dev.log; } | while IFS= read -r line; do printf '::error::%s\n' "${line:0:280}"; done
+            exit $rc
+          fi
           mkdir -p build/Payload
           cp -R build/VKTurn.xcarchive/Products/Applications/VKTurnProxy.app build/Payload/
           (cd build && zip -qr VKTurn-unsigned.ipa Payload)
