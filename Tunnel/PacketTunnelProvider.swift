@@ -67,7 +67,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
                              completionHandler: @escaping () -> Void) {
         appendLog("=== ОСТАНОВКА (причина \(reason.rawValue)) ===")
         stdinHandle?.write("STOP\n".data(using: .utf8)!)
-        hev_socks5_tunnel_terminate()
+        hev_socks5_tunnel_quit()
         completionHandler()
     }
 
@@ -156,13 +156,12 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     // MARK: - hev-socks5-tunnel: весь трафик TUN → SOCKS5 ядра
 
     private func startHev(tunFd: Int32, socksPort: Int) {
-        // TODO(ios): ключ конфига для fd сверить с версией hev
-        // (в Android-интеграциях встречается и `tunnel: fd:` и `tun-fd`).
+        // API hev (src/hev-main.h): main_from_str принимает fd параметром —
+        // отдельный ключ в YAML не нужен.
         let config = """
         tunnel:
           mtu: 1500
           ipv6: false
-          fd: \(tunFd)
         socks5:
           port: \(socksPort)
           address: 127.0.0.1
@@ -171,10 +170,12 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           log-level: 'warn'
         """
         Thread.detachNewThread {
-            config.withUTF8 { buf in
-                var cConfig = [CChar](UnsafeBufferPointer(start: buf.baseAddress?.assumingMemoryBound(to: CChar.self),
-                                                          count: buf.count)) + [0]
-                _ = hev_socks5_tunnel_main(&cConfig)
+            config.utf8CString.withUnsafeBufferPointer { buf in
+                _ = hev_socks5_tunnel_main_from_str(
+                    buf.baseAddress?.assumingMemoryBound(to: UInt8.self),
+                    UInt32(buf.count - 1),   // без завершающего \0
+                    tunFd
+                )
             }
         }
     }

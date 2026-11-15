@@ -20,7 +20,7 @@ jobs:
         run: git clone --depth 1 "${CORE_REPO_URL:-https://github.com/cacggghp/vk-turn-proxy.git}" "$HOME/core"
 
       - name: Clone hev-socks5-tunnel
-        run: git clone --depth 1 --recurse-submodules https://github.com/hev/hev-socks5-tunnel.git "$HOME/hev"
+        run: git clone --recursive https://github.com/heiher/hev-socks5-tunnel.git "$HOME/hev"
 
       - name: Build core for iOS
         run: CORE_DIR="$HOME/core" scripts/build-core-ios.sh
