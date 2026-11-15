@@ -30,18 +30,29 @@ jobs:
         run: xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -list || true
 
       - name: Validate build (simulator)
-        run: xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
-               -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-               CODE_SIGNING_ALLOWED=NO build
+        run: |
+          set -o pipefail
+          xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
+                 -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+                 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build/xcodebuild-sim.log
+
+      - name: Simulator errors
+        if: failure()
+        run: grep -E "error:" build/xcodebuild-sim.log | head -25 | while IFS= read -r line; do printf '::error::%s\n' "${line:0:300}"; done
 
       - name: Build unsigned IPA (device)
         run: |
+          set -o pipefail
           xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
             -sdk iphoneos -configuration Release -archivePath build/VKTurn.xcarchive \
-            CODE_SIGNING_ALLOWED=NO archive
+            CODE_SIGNING_ALLOWED=NO archive 2>&1 | tee build/xcodebuild-dev.log
           mkdir -p build/Payload
           cp -R build/VKTurn.xcarchive/Products/Applications/VKTurnProxy.app build/Payload/
           (cd build && zip -qr VKTurn-unsigned.ipa Payload)
+
+      - name: Device errors
+        if: failure()
+        run: grep -E "error:" build/xcodebuild-dev.log | head -25 | while IFS= read -r line; do printf '::error::%s\n' "${line:0:300}"; done
 
       - uses: actions/upload-artifact@v4
         if: success()
