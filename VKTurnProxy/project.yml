@@ -7,7 +7,8 @@ options:
 
 settings:
   base:
-    DEVELOPMENT_TEAM: CDMQ33VFQC
+    # Team ID вписывается извне при подписи (CI/env) — не хардкодить чужой
+    DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
 
 targets:
@@ -28,7 +29,7 @@ targets:
     info:
       path: VKTurnProxy/Info.plist
       properties:
-        CFBundleDisplayName: "VK Turn Proxy"
+        CFBundleDisplayName: "VKTurn"
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         # Declare that we don't use non-exempt encryption — only standard
