@@ -5,6 +5,9 @@ on:
     branches: [product, main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
@@ -35,9 +38,9 @@ jobs:
           if ! xcodebuild -project VKTurnProxy/VKTurnProxy.xcodeproj -scheme VKTurnProxy \
                  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
                  CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build/xcodebuild-sim.log; then
-            { grep -E "error:" build/xcodebuild-sim.log | head -5 || true
+            { grep -E "error:|BUILD FAILED|not found|fatal" build/xcodebuild-sim.log | grep -v '^$' | head -5 || true
               echo '===TAIL==='
-              tail -5 build/xcodebuild-sim.log; } | while IFS= read -r line; do printf '::error::%s\n' "${line:0:280}"; done
+              grep -v '^$' build/xcodebuild-sim.log | tail -8; } | while IFS= read -r line; do [ -n "$line" ] && printf '::error::%s\n' "${line:0:280}"; done
             exit 65
           fi
 
@@ -65,3 +68,14 @@ jobs:
         with:
           name: vkturn-ios-unsigned
           path: build/VKTurn-unsigned.ipa
+
+      - name: Save build logs to debug branch
+        if: failure()
+        run: |
+          git config user.email "ci@vkturn.local"
+          git config user.name "vkturn-ci"
+          BR="debug/${GITHUB_RUN_ID}"
+          git checkout -q --detach
+          git add -f build/xcodebuild-sim.log build/xcodebuild-dev.log 2>/dev/null || true
+          git commit -qm "ci debug logs $BR" || true
+          git push -q origin "HEAD:$BR" || echo "log push failed"
