@@ -21,7 +21,13 @@ export GOOS=ios GOARCH=arm64 CGO_ENABLED=1
 export CC="$(xcrun -sdk "$SDK" -find clang) -isysroot $(xcrun -sdk "$SDK" --show-sdk-path) -arch arm64"
 
 cd "$CORE_DIR"
-go build -buildmode=c-archive -ldflags "-s -w -checklinkname=0" -trimpath -o "$OUT/libvkturn.a" ./client
+# Лог сборки — пишем в файл: CI складывает его в артефакт build-logs
+if ! go build -buildmode=c-archive -ldflags "-s -w -checklinkname=0" -trimpath -o "$OUT/libvkturn.a" ./client \
+     2> "$ROOT/build/core-build.log"; then
+  echo "=== ЯДРО НЕ СОБРАЛОСЬ, хвост лога: ==="
+  tail -60 "$ROOT/build/core-build.log" || true
+  exit 1
+fi
 
 # c-archive кладёт заголовок рядом с .a
 if [ -f "$OUT/libvkturn.h" ]; then
