@@ -24,13 +24,13 @@ jobs:
         run: git clone --recursive https://github.com/heiher/hev-socks5-tunnel.git "$HOME/hev"
 
       - name: Build core for iOS
-        run: CORE_DIR="$HOME/core" scripts/build-core-ios.sh
+        run: CORE_DIR="$HOME/core" bash scripts/build-core-ios.sh
 
       - name: Build hev for iOS
-        run: HEV_DIR="$HOME/hev" scripts/build-hev.sh
+        run: HEV_DIR="$HOME/hev" bash scripts/build-hev.sh
 
       - name: Generate Xcode project & build
-        run: IPA=1 scripts/build.sh
+        run: IPA=1 bash scripts/build.sh
 
       - name: Collect build logs
         if: always()
